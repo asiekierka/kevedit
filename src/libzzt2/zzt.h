@@ -55,6 +55,8 @@ extern "C" {
 #define ZZT_KEY_PURPLE		4
 #define ZZT_KEY_YELLOW		5
 #define ZZT_KEY_WHITE		6
+/* Starting health */
+#define ZZT_WORLD_START_HEALTH  100
 
 /* Properties used/not-used by a tile with param data */
 #define ZZT_PROPERTY_NOPARAM 0x00

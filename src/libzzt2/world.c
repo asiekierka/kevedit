@@ -39,7 +39,7 @@ ZZTworld *zztWorldCreate(char *filename, char *title)
 	/* Zero the header, then set initial values */
 	memset(world->header, 0, sizeof(ZZTworldinfo));
 	/* Health = 100 */
-	zztWorldSetHealth(world, 100);
+	zztWorldSetHealth(world, ZZT_WORLD_START_HEALTH);
 	/* Title = given or 'name' of filename or UNTITLED */
 	if(title != NULL)
 		zztWorldSetTitle(world, title);

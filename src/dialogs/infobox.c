@@ -73,6 +73,7 @@ dialog buildboardinfodialog(ZZTworld * myworld);
 int boardinfoeditoption(displaymethod * d, ZZTworld* myworld, dialogComponent* opt);
 int boardinfodeltaoption(displaymethod * d, ZZTworld* myworld, dialogComponent* opt, int delta);
 int boardinfostaroption(ZZTworld* myworld, dialogComponent* opt);
+int boardinfodeleteoption(ZZTworld* myworld, dialogComponent* opt);
 
 int editboardinfo(ZZTworld* myworld, displaymethod* d)
 {
@@ -119,6 +120,11 @@ int editboardinfo(ZZTworld* myworld, displaymethod* d)
 
 			case '*':
 				rebuild = boardinfostaroption(myworld, dialogGetCurOption(dia));
+				break;
+
+			case DKEY_BACKSPACE:
+			case DKEY_DELETE:
+				rebuild = boardinfodeleteoption(myworld, dialogGetCurOption(dia));
 				break;
 
 			case DKEY_F1:
@@ -502,6 +508,61 @@ int boardinfostaroption(ZZTworld* myworld, dialogComponent* opt)
 	return 0;
 }
 
+int boardinfodeleteoption(ZZTworld* myworld, dialogComponent* opt)
+{
+	switch (opt->id) {
+		case BRDINFO_TITLE:
+			zztBoardSetTitle(myworld, "");
+			return UPDATE_DIALOG;
+
+		case BRDINFO_MESSAGE:
+			zztBoardSetMessage(myworld, "");
+			return UPDATE_DIALOG;
+
+		case BRDINFO_BRDNORTH:
+			zztBoardSetBoard_n(myworld, 0);
+			return UPDATE_DIALOG;
+
+		case BRDINFO_BRDSOUTH:
+			zztBoardSetBoard_s(myworld, 0);
+			return UPDATE_DIALOG;
+
+		case BRDINFO_BRDEAST:
+			zztBoardSetBoard_e(myworld, 0);
+			return UPDATE_DIALOG;
+
+		case BRDINFO_BRDWEST:
+			zztBoardSetBoard_w(myworld, 0);
+			return UPDATE_DIALOG;
+
+		case BRDINFO_DARKNESS:
+			zztBoardSetDarkness(myworld, 0);
+			return UPDATE_DIALOG;
+
+		case BRDINFO_REENTER:
+			zztBoardSetReenter(myworld, 0);
+			return UPDATE_DIALOG;
+
+		case BRDINFO_REENTERX:
+			zztBoardSetReenter_x(myworld, 0);
+			return UPDATE_DIALOG;
+
+		case BRDINFO_REENTERY:
+			zztBoardSetReenter_y(myworld, 0);
+			return UPDATE_DIALOG;
+
+		case BRDINFO_MAXSHOTS:
+			zztBoardSetMaxshots(myworld, 255);
+			return UPDATE_DIALOG;
+
+		case BRDINFO_TIMELIM:
+			zztBoardSetTimelimit(myworld, 0);
+			return UPDATE_DIALOG;
+	}
+
+	return UPDATE_NONE;
+}
+
 /************* World Info ******************/
 
 /* Types of World Info */
@@ -526,9 +587,10 @@ int worldinfoeditoption(int curoption, ZZTworld* myworld,
 		int cursorx, int cursory, keveditor *myeditor);
 int worldinfodirectionoption(int curoption, ZZTworld* myworld,
 		int cursorx, int cursory, int dir, keveditor *myeditor);
+void worldinfoclearkeys(ZZTworld* myworld);
 void worldinfotogglekey(ZZTworld* myworld, int whichkey);
 int editworldflags(ZZTworld* myworld, displaymethod* d);
-static int worldinfodeleteoption(int curoption, keveditor *myeditor);
+static int worldinfodeleteoption(int curoption, ZZTworld *myworld, keveditor *myeditor);
 static void worldinfopickfile(int curoption, ZZTworld *myworld, int cursorx, int cursory,
                               keveditor *myeditor, bool *quit);
 
@@ -620,7 +682,7 @@ int editworldinfo(keveditor *myeditor)
 
                                 case DKEY_BACKSPACE:
                                 case DKEY_DELETE:
-                                        result = worldinfodeleteoption(curoption, myeditor);
+                                        result = worldinfodeleteoption(curoption, myworld, myeditor);
                                         break;
                         }
 			if(result != 0) {
@@ -639,6 +701,12 @@ int editworldinfo(keveditor *myeditor)
 													 else cursorx = 31 + ZZT_KEY_WHITE; break;
 				case DKEY_RIGHT: if (cursorx < 31 + ZZT_KEY_WHITE) cursorx++;
 													 else cursorx = 31; break;
+                                case DKEY_BACKSPACE:
+                                case DKEY_DELETE:
+					worldinfoclearkeys(myworld);
+					drawstaticworldinfo(d);
+					drawworldinfo(myworld, myeditor);
+					break;
 
 				case DKEY_ENTER:
 				case ' ':
@@ -873,6 +941,14 @@ int worldinfodirectionoption(int curoption, ZZTworld* myworld, int cursorx, int 
 	}
 }
 
+void worldinfoclearkeys(ZZTworld* myworld)
+{
+	int i;
+
+	for (i = ZZT_KEY_BLUE; i <= ZZT_KEY_WHITE; i++)
+		zztWorldSetKey(myworld, i, 0);
+}
+
 void worldinfotogglekey(ZZTworld* myworld, int whichkey)
 {
 	zztWorldSetKey(myworld, whichkey, !zztWorldGetKey(myworld, whichkey));
@@ -948,8 +1024,46 @@ int editworldflags(ZZTworld* myworld, displaymethod* d)
 	return key;
 }
 
-int worldinfodeleteoption(int curoption, keveditor *myeditor) {
+int worldinfodeleteoption(int curoption, ZZTworld *myworld, keveditor *myeditor) {
+	ZZTworldinfo * header = myworld->header;
+
         switch(curoption) {
+		case WLDINFO_ISSAVED:
+			header->savegame = 0;
+			return 1;
+
+		case WLDINFO_AMMO:
+			header->ammo = 0;
+			return 1;
+
+		case WLDINFO_GEMS:
+			header->gems = 0;
+			return 1;
+
+		case WLDINFO_HEALTH:
+			header->health = ZZT_WORLD_START_HEALTH;
+			return 1;
+
+		case WLDINFO_TORCHES:
+			header->torches = 0;
+			return 1;
+
+		case WLDINFO_SCORE:
+			header->score = 0;
+			return 1;
+
+		case WLDINFO_TCYCLES:
+			header->torchcycles = 0;
+			return 1;
+
+		case WLDINFO_ECYCLES:
+			header->energizercycles = 0;
+			return 1;
+
+		case WLDINFO_TIMEPASSED:
+			header->timepassed = 0;
+			return 1;
+
                 case WLDINFO_CHARSET:
                         // Restore the default character set
                         if(myeditor->char_set != NULL) {
