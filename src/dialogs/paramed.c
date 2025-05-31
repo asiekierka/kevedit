@@ -1211,11 +1211,11 @@ char * buildparamdescription(ZZTblock * block, int index)
 	ZZTparam * param = NULL;
 	char * tileName    = NULL;
 	char * description = NULL;
+	char buffer[30];
 
 	if (index < 0 || index >= block->paramcount) {
-		description = str_create(30);
-		sprintf(description, "(missing stat %d)", index);
-		return description;
+		sprintf(buffer, "(missing stat %d)", index);
+		return str_dup(buffer);
 	}
 
 	param = block->params[index];
@@ -1236,14 +1236,21 @@ char * buildparamdescription(ZZTblock * block, int index)
 		tileName = str_dup("(no type)");
 	}
 
-	description = str_create(strlen(tileName) + 20);
+	description = str_create(strlen(tileName) + 30);
 
 	sprintf(description, "(%2d, %2d): ", (char) param->x + 1, (char) param->y + 1);
 	strcat(description, tileName);
 
+	if (param->length > 0)
+		sprintf(buffer, " (%d b)", param->length);
+	else
+		buffer[0] = '\0';
+
 	/* QUICKHACK: if the name is too long, truncate */
-	if (strlen(description) > 42)
-		strcpy(description + 39, "...");
+	if (strlen(description) > (42 - strlen(buffer)))
+		strcpy(description + (39 - strlen(buffer)), "...");
+
+	strcat(description, buffer);
 
 	free(tileName);
 	return description;
